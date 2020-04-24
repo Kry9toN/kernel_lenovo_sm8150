@@ -1,0 +1,10 @@
+kind: pipeline
+type: docker
+name: build
+
+steps:
+- name: cooked
+  image: najahi/oven:latest
+  commands:
+  - wget https://raw.githubusercontent.com/Kry9toN/Scripts/master/heart/droneheart
+  - bash droneheart
