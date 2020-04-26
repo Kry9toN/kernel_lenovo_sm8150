@@ -2186,7 +2186,6 @@ start:
 				hba->clk_gating.active_reqs--;
 				break;
 			}
-
 			spin_unlock_irqrestore(hba->host->host_lock, flags);
 			flush_work(&hba->clk_gating.ungate_work);
 			spin_lock_irqsave(hba->host->host_lock, flags);
@@ -7494,16 +7493,18 @@ static irqreturn_t ufshcd_intr(int irq, void *__hba)
 	 * read, make sure we handle them by checking the interrupt status
 	 * again in a loop until we process all of the reqs before returning.
 	 */
-	do {
-		enabled_intr_status =
-			intr_status & ufshcd_readl(hba, REG_INTERRUPT_ENABLE);
-		if (intr_status)
-			ufshcd_writel(hba, intr_status, REG_INTERRUPT_STATUS);
-		if (enabled_intr_status)
-			retval |= ufshcd_sl_intr(hba, enabled_intr_status);
+        do {
+                enabled_intr_status =
+                        intr_status & ufshcd_readl(hba, REG_INTERRUPT_ENABLE);
+                if (intr_status)
+                        ufshcd_writel(hba, intr_status, REG_INTERRUPT_STATUS);
+                if (enabled_intr_status) {
+                        ufshcd_sl_intr(hba, enabled_intr_status);
+                        retval = IRQ_HANDLED;
+                }
 
-		intr_status = ufshcd_readl(hba, REG_INTERRUPT_STATUS);
-	} while (intr_status && --retries);
+                intr_status = ufshcd_readl(hba, REG_INTERRUPT_STATUS);
+        } while (intr_status && --retries);
 
 	if (retval == IRQ_NONE) {
 		dev_err(hba->dev, "%s: Unhandled interrupt 0x%08x\n",
